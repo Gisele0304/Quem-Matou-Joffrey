@@ -1,0 +1,66 @@
+[
+    {
+        "codigo": "E1",
+        "nome": "Taça de Joffrey",
+        "tipo": "Objeto",
+        "descricao": "Taça utilizada pelo rei durante o banquete.",
+        "local": "Salão Principal",
+        "importancia": "Alta"
+    },
+    {
+        "codigo": "E2",
+        "nome": "Rede de cabelo de Sansa",
+        "tipo": "Objeto",
+        "descricao": "Acessório utilizado por Sansa durante o casamento.",
+        "local": "Salão Principal",
+        "importancia": "Alta"
+    },
+    {
+        "codigo": "E3",
+        "nome": "Vinho do casamento",
+        "tipo": "Substância",
+        "descricao": "Vinho servido durante a celebração.",
+        "local": "Salão Principal",
+        "importancia": "Alta"
+    },
+    {
+        "codigo": "E4",
+        "nome": "Torta do casamento",
+        "tipo": "Alimento",
+        "descricao": "Alimento servido durante o banquete.",
+        "local": "Salão Principal",
+        "importancia": "Média"
+    },
+    {
+        "codigo": "E5",
+        "nome": "Depoimento dos convidados",
+        "tipo": "Depoimento",
+        "descricao": "Relatos das pessoas presentes durante o casamento.",
+        "local": "Salão Principal",
+        "importancia": "Média"
+    },
+    {
+        "codigo": "E6",
+        "nome": "Fuga de Sansa",
+        "tipo": "Registro",
+        "descricao": "Informações sobre a saída de Sansa da Fortaleza Vermelha.",
+        "local": "Fortaleza Vermelha",
+        "importancia": "Média"
+    },
+    {
+        "codigo": "E7",
+        "nome": "Comportamento dos convidados",
+        "tipo": "Observação",
+        "descricao": "Observações sobre as atitudes dos convidados durante o banquete.",
+        "local": "Salão Principal",
+        "importancia": "Baixa"
+    },
+    {
+        "codigo": "E8",
+        "nome": "presente de Dontos",
+        "tipo": "Objeto",
+        "descricao": "enfeite de cabelo que após o casamento notou estar faltando uma parte.",
+        "local": "quarto de sansa",
+        "importancia": "Alta"
+    }
+]
