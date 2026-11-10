@@ -13,6 +13,14 @@ from ordenacao import (
     comparar_algoritmos
 )
 
+from estruturas import (
+    ListaSequencial,
+    ListaEncadeada,
+    Pilha,
+    Fila,
+    Deque
+)
+
 from tkinter import messagebox
 from pathlib import Path
 from dados import suspeitos, vitima, evidencias
@@ -81,6 +89,16 @@ class Envenamento(ctk.CTk):
 
         for evidencia in evidencias:
             self.tabela_hash.inserir(evidencia)
+
+        self.lista_estruturas = ListaSequencial()
+        self.lista_encadeada = ListaEncadeada()
+        self.pilha_acoes = Pilha()
+        self.fila_analise = Fila()
+        self.deque_investigacao = Deque()
+
+        for evidencia in evidencias:
+            self.lista_estruturas.inserir(evidencia["codigo"])
+            self.lista_encadeada.inserir(evidencia["codigo"])
 
         self.area_conteudo = ctk.CTkFrame(self)
         self.area_conteudo.pack(
@@ -191,6 +209,21 @@ class Envenamento(ctk.CTk):
             font=("Arial", 15, "bold"),
             command=self.mostrar_ordenacao
         ).grid(row=2, column=0, columnspan=2, padx=8, pady=6, sticky="ew")
+
+        ctk.CTkButton(
+            botoes,
+            text="Estruturas de dados",
+            height=45,
+            font=("Arial", 15, "bold"),
+            command=self.mostrar_estruturas
+        ).grid(
+            row=3,
+            column=0,
+            columnspan=2,
+            padx=8,
+            pady=6,
+            sticky="ew"
+        )
 
         ctk.CTkLabel(
             self.area_conteudo,
@@ -770,7 +803,329 @@ class Envenamento(ctk.CTk):
             pady=5
         )
 
-          
+    
+    
+    def mostrar_estruturas(self):
+        self.limpar_tela()
+
+        self.criar_titulo(
+            "Estruturas de Dados",
+            "Escolha uma estrutura para realizar operações."
+        )
+
+        codigos = [e["codigo"] for e in evidencias]
+
+        lista = ListaSequencial()
+        encadeada = ListaEncadeada()
+        pilha = Pilha()
+        fila = Fila()
+        deque = Deque()
+
+        for codigo in codigos:
+            lista.inserir(codigo)
+            encadeada.inserir(codigo)
+            pilha.empilhar(codigo)
+            fila.enfileirar(codigo)
+            deque.inserir_fim(codigo)
+
+        estruturas = {
+            "Lista sequencial": lista,
+            "Lista encadeada": encadeada,
+            "Pilha": pilha,
+            "Fila": fila,
+            "Deque": deque
+        }
+
+        area_opcoes = ctk.CTkFrame(
+            self.area_conteudo,
+            fg_color="transparent"
+        )
+        area_opcoes.pack(fill="x", padx=20, pady=20)
+
+        area_opcoes.grid_columnconfigure(0, weight=1)
+        area_opcoes.grid_columnconfigure(1, weight=1)
+
+        def abrir_estrutura(nome):
+            self.limpar_tela()
+
+            estrutura = estruturas[nome]
+
+            self.criar_titulo(
+                nome,
+                "Escolha uma operação para executar."
+            )
+
+            resultado = ctk.CTkLabel(
+                self.area_conteudo,
+                text="Elementos: " + str(estrutura.listar()),
+                font=("Arial", 14),
+                wraplength=750
+            )
+            resultado.pack(pady=20)
+
+            entrada = ctk.CTkEntry(
+                self.area_conteudo,
+                placeholder_text="Digite o código da evidência (ex.: E8)",
+                width=280
+            )
+            entrada.pack(pady=10)
+
+            def atualizar():
+                resultado.configure(
+                    text="Elementos: " + str(estrutura.listar())
+                )
+
+            def adicionar_inicio():
+                codigo = entrada.get().strip().upper()
+
+                if not codigo:
+                    messagebox.showwarning(
+                        "Atenção",
+                        "Digite um código."
+                    )
+                    return
+
+                if nome == "Deque":
+                    estrutura.inserir_inicio(codigo)
+                else:
+                    messagebox.showinfo(
+                        "Operação inválida",
+                        "Essa estrutura não permite inserir no início."
+                    )
+                    return
+
+                entrada.delete(0, "end")
+                atualizar()
+
+            def adicionar_fim():
+                codigo = entrada.get().strip().upper()
+
+                if not codigo:
+                    messagebox.showwarning(
+                        "Atenção",
+                        "Digite um código."
+                    )
+                    return
+
+                if nome in ["Lista sequencial", "Lista encadeada"]:
+                    estrutura.inserir(codigo)
+                elif nome == "Pilha":
+                    estrutura.empilhar(codigo)
+                elif nome == "Fila":
+                    estrutura.enfileirar(codigo)
+                elif nome == "Deque":
+                    estrutura.inserir_fim(codigo)
+
+                entrada.delete(0, "end")
+                atualizar()
+
+            def remover_inicio():
+                if nome == "Lista sequencial":
+                    elementos = estrutura.listar()
+                    if elementos:
+                        estrutura.remover(elementos[0])
+                        atualizar()
+                    else:
+                        messagebox.showinfo("Aviso", "A lista está vazia.")
+
+                elif nome == "Lista encadeada":
+                    elementos = estrutura.listar()
+                    if elementos:
+                        estrutura.remover(elementos[0])
+                        atualizar()
+                    else:
+                        messagebox.showinfo("Aviso", "A lista está vazia.")
+
+                elif nome == "Fila":
+                    removido = estrutura.desenfileirar()
+                    messagebox.showinfo(
+                        "Fila",
+                        f"Elemento retirado: {removido}"
+                    )
+                    atualizar()
+
+                elif nome == "Deque":
+                    removido = estrutura.remover_inicio()
+                    messagebox.showinfo(
+                        "Deque",
+                        f"Elemento retirado: {removido}"
+                    )
+                    atualizar()
+
+                else:
+                    messagebox.showinfo(
+                        "Operação inválida",
+                        "Essa estrutura não permite retirar pelo início."
+                    )
+
+            def remover_fim():
+                if nome == "Pilha":
+                    removido = estrutura.desempilhar()
+                elif nome == "Deque":
+                    removido = estrutura.remover_fim()
+                else:
+                    messagebox.showinfo(
+                        "Operação inválida",
+                        "Essa operação não está disponível nesta estrutura."
+                    )
+                    return
+
+                messagebox.showinfo(
+                    "Resultado",
+                    f"Elemento retirado: {removido}"
+                )
+                atualizar()
+
+            def remover_elemento():
+                codigo = entrada.get().strip().upper()
+
+                if not codigo:
+                    messagebox.showwarning(
+                        "Atenção",
+                        "Digite o código que deseja remover."
+                    )
+                    return
+
+                if nome in ["Lista sequencial", "Lista encadeada"]:
+                    sucesso = estrutura.remover(codigo)
+
+                    if sucesso:
+                        messagebox.showinfo(
+                            "Resultado",
+                            "Elemento removido."
+                        )
+                    else:
+                        messagebox.showinfo(
+                            "Resultado",
+                            "Elemento não encontrado."
+                        )
+
+                    entrada.delete(0, "end")
+                    atualizar()
+                else:
+                    messagebox.showinfo(
+                        "Operação inválida",
+                        "Use as operações próprias dessa estrutura."
+                    )
+
+            def consultar():
+                if nome == "Pilha":
+                    valor = estrutura.topo()
+                elif nome == "Fila":
+                    valor = estrutura.frente()
+                else:
+                    codigo = entrada.get().strip().upper()
+
+                    if nome == "Lista sequencial":
+                        valor = estrutura.buscar(codigo)
+                    elif nome == "Lista encadeada":
+                        valor = estrutura.buscar(codigo)
+                    else:
+                        elementos = estrutura.listar()
+                        valor = codigo if codigo in elementos else None
+
+                messagebox.showinfo(
+                    "Consulta",
+                    f"Resultado: {valor}"
+                )
+
+            botoes = ctk.CTkFrame(
+                self.area_conteudo,
+                fg_color="transparent"
+            )
+            botoes.pack(fill="x", padx=20, pady=10)
+
+            botoes.grid_columnconfigure(0, weight=1)
+            botoes.grid_columnconfigure(1, weight=1)
+
+            operacoes = []
+
+            if nome in ["Lista sequencial", "Lista encadeada"]:
+                operacoes = [
+                    ("Inserir elemento", adicionar_fim),
+                    ("Remover elemento", remover_elemento),
+                    ("Buscar elemento", consultar)
+                ]
+
+            elif nome == "Pilha":
+                operacoes = [
+                    ("Empilhar", adicionar_fim),
+                    ("Desempilhar", remover_fim),
+                    ("Consultar topo", consultar)
+                ]
+
+            elif nome == "Fila":
+                operacoes = [
+                    ("Enfileirar", adicionar_fim),
+                    ("Desenfileirar", remover_inicio),
+                    ("Consultar frente", consultar)
+                ]
+
+            elif nome == "Deque":
+                operacoes = [
+                    ("Inserir no início", adicionar_inicio),
+                    ("Inserir no fim", adicionar_fim),
+                    ("Retirar do início", remover_inicio),
+                    ("Retirar do fim", remover_fim)
+                ]
+
+            for i, (texto, comando) in enumerate(operacoes):
+                ctk.CTkButton(
+                    botoes,
+                    text=texto,
+                    height=40,
+                    command=comando
+                ).grid(
+                    row=i // 2,
+                    column=i % 2,
+                    padx=6,
+                    pady=6,
+                    sticky="ew"
+                )
+
+            ctk.CTkButton(
+                self.area_conteudo,
+                text="Voltar às estruturas",
+                command=self.mostrar_estruturas
+            ).pack(pady=10)
+
+            ctk.CTkButton(
+                self.area_conteudo,
+                text="Voltar à página inicial",
+                command=self.mostrar_inicio
+            ).pack(pady=5)
+
+        opcoes = [
+            "Lista sequencial",
+            "Lista encadeada",
+            "Pilha",
+            "Fila",
+            "Deque"
+        ]
+
+        for i, nome in enumerate(opcoes):
+            ctk.CTkButton(
+                area_opcoes,
+                text=nome,
+                height=65,
+                font=("Arial", 16, "bold"),
+                command=lambda n=nome: abrir_estrutura(n)
+            ).grid(
+                row=i // 2,
+                column=i % 2,
+                padx=10,
+                pady=10,
+                sticky="ew"
+            )
+
+        ctk.CTkButton(
+            self.area_conteudo,
+            text="Voltar à página inicial",
+            width=220,
+            height=40,
+            command=self.mostrar_inicio
+        ).pack(pady=10)
+  
 
     def mostrar_cadastro(self):
 
