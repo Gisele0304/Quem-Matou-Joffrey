@@ -5,6 +5,13 @@ import webbrowser
 import networkx as nx
 
 from mapa import criar_mapa
+from ordenacao import (
+    bubble_sort,
+    insertion_sort,
+    selection_sort,
+    quick_sort,
+    comparar_algoritmos
+)
 
 from tkinter import messagebox
 from pathlib import Path
@@ -177,6 +184,13 @@ class Envenamento(ctk.CTk):
             command=self.mostrar_mapa
         ).grid(row=1, column=1, padx=8, pady=6, sticky="ew")
 
+        ctk.CTkButton(
+            botoes,
+            text="Análise de ordenação",
+            height=45,
+            font=("Arial", 15, "bold"),
+            command=self.mostrar_ordenacao
+        ).grid(row=2, column=0, columnspan=2, padx=8, pady=6, sticky="ew")
 
         ctk.CTkLabel(
             self.area_conteudo,
@@ -645,7 +659,118 @@ class Envenamento(ctk.CTk):
             command=restaurar_grafo
         ).pack(side="left", padx=5)
 
-        
+    
+    def mostrar_ordenacao(self):
+        self.limpar_tela()
+
+        self.criar_titulo(
+            "Análise de Desempenho",
+            "Compare os algoritmos de ordenação das evidências."
+        )
+
+        ctk.CTkButton(
+             self.area_conteudo,
+            text="Voltar à página inicial",
+            width=220,
+            height=40,
+            command=self.mostrar_inicio
+        ).pack(pady=10)
+
+        algoritmos = {
+            "Bubble Sort": bubble_sort,
+            "Insertion Sort": insertion_sort,
+            "Selection Sort": selection_sort,
+            "QuickSort": quick_sort
+        }
+
+        resultados_tempo = comparar_algoritmos(evidencias)
+
+        ctk.CTkLabel(
+            self.area_conteudo,
+            text="Escolha um algoritmo:",
+            font=("Arial", 15, "bold")
+        ).pack(pady=5)
+
+        lista_resultados = ctk.CTkScrollableFrame(
+            self.area_conteudo,
+            height=180
+        )
+        lista_resultados.pack(
+            fill="x",
+            padx=20,
+            pady=10
+        )
+
+        def mostrar_resultado(nome):
+            for item in lista_resultados.winfo_children():
+                item.destroy()
+
+            resultado = algoritmos[nome](evidencias)
+
+            for evidencia in resultado:
+                ctk.CTkLabel(
+                    lista_resultados,
+                    text=(
+                        f"{evidencia['codigo']} - "
+                        f"{evidencia['nome']} | "
+                        f"Importância: {evidencia['importancia']}"
+                    ),
+                    font=("Arial", 13)
+                ).pack(anchor="w", padx=10, pady=5)
+
+        escolha = ctk.CTkOptionMenu(
+            self.area_conteudo,
+            values=list(algoritmos.keys()),
+            width=250,
+            command=mostrar_resultado
+        )
+        escolha.pack(pady=5)
+
+        mostrar_resultado("Bubble Sort")
+
+        figura = Figure(
+            figsize=(9, 4),
+            dpi=100,
+            facecolor="#F4F6F8"
+        )
+
+        ax = figura.add_subplot(111)
+
+        nomes = list(resultados_tempo.keys())
+        tempos = list(resultados_tempo.values())
+
+        ax.bar(
+            nomes,
+            tempos,
+            color=["#C0392B", "#2980B9", "#239B56", "#8E44AD"]
+        )
+
+        ax.set_title(
+            "Comparação dos tempos de execução",
+            fontsize=14,
+            fontweight="bold"
+        )
+
+        ax.set_ylabel("Tempo médio (ms)")
+        ax.set_xlabel("Algoritmos")
+        ax.tick_params(axis="x", rotation=10)
+
+        figura.tight_layout()
+
+        canvas = FigureCanvasTkAgg(
+            figura,
+            master=self.area_conteudo
+        )
+        canvas.draw()
+
+        canvas.get_tk_widget().pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=5
+        )
+
+          
 
     def mostrar_cadastro(self):
 

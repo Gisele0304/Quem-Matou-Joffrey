@@ -80,6 +80,7 @@ def quick_sort(lista):
     return dados
 
 
+
 def comparar_algoritmos(lista):
     algoritmos = {
         "Bubble Sort": bubble_sort,
@@ -89,12 +90,18 @@ def comparar_algoritmos(lista):
     }
 
     resultados = {}
+    repeticoes = 100
 
     for nome, algoritmo in algoritmos.items():
         inicio = time.perf_counter()
-        algoritmo(lista)
+
+        for i in range(repeticoes):
+            algoritmo(lista)
+
         fim = time.perf_counter()
 
-        resultados[nome] = (fim - inicio) * 1000
+        tempo_medio = ((fim - inicio) * 1000) / repeticoes
+        resultados[nome] = tempo_medio
 
     return resultados
+
