@@ -855,13 +855,11 @@ class Envenamento(ctk.CTk):
                 "Escolha uma operação para executar."
             )
 
-            resultado = ctk.CTkLabel(
+            visualizacao = ctk.CTkLabel(
                 self.area_conteudo,
-                text="Elementos: " + str(estrutura.listar()),
-                font=("Arial", 14),
-                wraplength=750
+                fg_color="transparent",
             )
-            resultado.pack(pady=20)
+            visualizacao.pack(fill="x", padx=20, pady=20)
 
             entrada = ctk.CTkEntry(
                 self.area_conteudo,
@@ -871,9 +869,243 @@ class Envenamento(ctk.CTk):
             entrada.pack(pady=10)
 
             def atualizar():
-                resultado.configure(
-                    text="Elementos: " + str(estrutura.listar())
-                )
+                for widget in visualizacao.winfo_children():
+                    widget.destroy()
+
+                elementos = estrutura.listar()
+
+                if not elementos:
+                    ctk.CTkLabel(
+                        visualizacao,
+                        text="A lista está vazia.",
+                        font=("Arial", 14)
+                    ).pack(pady=20)
+
+                
+                elif nome == "Lista sequencial":
+                    for i, elemento in enumerate(elementos):
+                        if i % 4 == 0:
+                            linha = ctk.CTkFrame(
+                                visualizacao,
+                                fg_color="transparent"
+                            )
+                            linha.pack(anchor="center", pady=8)
+
+                        caixa = ctk.CTkFrame(
+                            linha,
+                            width=130,
+                            height=85,
+                            corner_radius=10,
+                            fg_color="#21618C"
+                        )
+                        caixa.pack(side="left", padx=8)
+                        caixa.pack_propagate(False)
+
+                        ctk.CTkLabel(
+                            caixa,
+                            text=elemento,
+                            font=("Arial", 18, "bold"),
+                            text_color="white"
+                        ).pack(pady=(12, 2))
+
+                        ctk.CTkLabel(
+                            caixa,
+                            text=f"Índice: {i}",
+                            font=("Arial", 12),
+                            text_color="white"
+                        ).pack()
+
+
+                elif nome == "Lista encadeada":
+                    for i, elemento in enumerate(elementos):
+                        if i % 4 == 0:
+                            linha = ctk.CTkFrame(
+                                visualizacao,
+                                fg_color="transparent"
+                            )
+                            linha.pack(anchor="center", pady=8)
+
+                        no = ctk.CTkFrame(
+                            linha,
+                            width=100,
+                            height=70,
+                            corner_radius=10,
+                            fg_color="#21618C"
+                        )
+                        no.pack(side="left", padx=5)
+                        no.pack_propagate(False)
+
+                        ctk.CTkLabel(
+                            no,
+                            text=elemento,
+                            font=("Arial", 18, "bold"),
+                            text_color="white"
+                        ).pack(pady=(10, 2))
+
+                        ctk.CTkLabel(
+                            no,
+                            text="Nó",
+                            font=("Arial", 12),
+                            text_color="white"
+                        ).pack()
+
+                        if i % 4 != 3 and i != len(elementos) - 1:
+                            ctk.CTkLabel(
+                                linha,
+                                text="→",
+                                font=("Arial", 24, "bold")
+                            ).pack(side="left", padx=2)
+
+                        if i % 4 == 3 and i != len(elementos) - 1:
+                            ctk.CTkLabel(
+                                visualizacao,
+                                text="↓",
+                                font=("Arial", 20, "bold")
+                            ).pack()
+
+                
+                elif nome == "Pilha":
+                    coluna = ctk.CTkFrame(
+                        visualizacao,
+                        fg_color="transparent"
+                    )
+                    coluna.pack(anchor="center", pady=10)
+
+                    ctk.CTkLabel(
+                        coluna,
+                        text="TOPO ↓",
+                        font=("Arial", 16, "bold"),
+                        text_color="#257C0D"
+                    ).pack(pady=2)
+
+                    for i, elemento in enumerate(reversed(elementos)):
+                        cor = "#B8860B" if i == 0 else "#21618C"
+
+                        caixa = ctk.CTkFrame(
+                            coluna,
+                            width=120,
+                            height=35,
+                            corner_radius=8,
+                            fg_color=cor
+                        )
+                        caixa.pack(pady=2)
+                        caixa.pack_propagate(False)
+
+                        ctk.CTkLabel(
+                            caixa,
+                            text=elemento,
+                            font=("Arial", 18, "bold"),
+                            text_color="white"
+                        ).pack(expand=True)
+
+                elif nome == "Fila":
+                    linha = ctk.CTkFrame(
+                        visualizacao,
+                        fg_color="transparent"
+                    )
+                    linha.pack(anchor="center", pady=20)
+
+                    for i, elemento in enumerate(elementos):
+                        if i == 0:
+                            ctk.CTkLabel(
+                                linha,
+                                text="FRENTE",
+                                font=("Arial", 12, "bold"),
+                                text_color="#257C0D"
+                            ).pack(side="left", padx=5)
+
+                        caixa = ctk.CTkFrame(
+                            linha,
+                            width=80,
+                            height=65,
+                            corner_radius=8,
+                            fg_color="#257C0D" if i == 0 else "#21618C"
+                        )
+                        caixa.pack(side="left", padx=3)
+                        caixa.pack_propagate(False)
+
+                        ctk.CTkLabel(
+                            caixa,
+                            text=elemento,
+                            font=("Arial", 17, "bold"),
+                            text_color="white"
+                        ).pack(expand=True)
+
+                        if i < len(elementos) - 1:
+                            ctk.CTkLabel(
+                                linha,
+                                text="→",
+                                font=("Arial", 20, "bold")
+                            ).pack(side="left", padx=2)
+
+                        if i == len(elementos) - 1:
+                            ctk.CTkLabel(
+                                linha,
+                                text="FINAL",
+                                font=("Arial", 12, "bold"),
+                                text_color="#21618C"
+                            ).pack(side="left", padx=5)
+
+
+                elif nome == "Deque":
+                    linha = ctk.CTkFrame(
+                        visualizacao,
+                        fg_color="transparent"
+                    )
+                    linha.pack(anchor="center", pady=20)
+
+                    if elementos:
+                        ctk.CTkLabel(
+                            linha,
+                            text="INÍCIO",
+                            font=("Arial", 12, "bold"),
+                            text_color="#257C0D"
+                        ).pack(side="left", padx=5)
+
+                        for i, elemento in enumerate(elementos):
+                            cor = "#257C0D" if i == 0 else "#B8860B" if i == len(elementos) - 1 else "#21618C"
+
+                            caixa = ctk.CTkFrame(
+                                linha,
+                                width=80,
+                                height=65,
+                                corner_radius=8,
+                                fg_color=cor
+                            )
+                            caixa.pack(side="left", padx=3)
+                            caixa.pack_propagate(False)
+
+                            ctk.CTkLabel(
+                                caixa,
+                                text=elemento,
+                                font=("Arial", 17, "bold"),
+                                text_color="white"
+                            ).pack(expand=True)
+
+                            if i < len(elementos) - 1:
+                                ctk.CTkLabel(
+                                    linha,
+                                    text="↔",
+                                    font=("Arial", 20, "bold")
+                                ).pack(side="left", padx=2)
+
+                        ctk.CTkLabel(
+                            linha,
+                            text="FINAL",
+                            font=("Arial", 12, "bold"),
+                            text_color="#B8860B"
+                        ).pack(side="left", padx=5)
+
+
+                else:
+                    ctk.CTkLabel(
+                        visualizacao,
+                        text="Elementos: " + str(elementos),
+                        font=("Arial", 14),
+                        wraplength=750
+                    ).pack(pady=20)
+
+            atualizar()
 
             def adicionar_inicio():
                 codigo = entrada.get().strip().upper()
