@@ -4,6 +4,8 @@ import json
 import webbrowser
 import networkx as nx
 
+from PIL import Image
+from pathlib import Path
 from mapa import criar_mapa
 from ordenacao import (
     bubble_sort,
@@ -89,16 +91,22 @@ class Envenamento(ctk.CTk):
 
         for evidencia in evidencias:
             self.tabela_hash.inserir(evidencia)
-
-        self.lista_estruturas = ListaSequencial()
-        self.lista_encadeada = ListaEncadeada()
-        self.pilha_acoes = Pilha()
+        
+        self.lista_evidencias = ListaSequencial()
+        self.historico = ListaEncadeada()
+        self.pilha_desfazer = Pilha()
         self.fila_analise = Fila()
-        self.deque_investigacao = Deque()
+        self.deque_prioridade = Deque()
 
         for evidencia in evidencias:
-            self.lista_estruturas.inserir(evidencia["codigo"])
-            self.lista_encadeada.inserir(evidencia["codigo"])
+            codigo = evidencia["codigo"]
+
+            self.lista_evidencias.inserir(codigo)
+            self.historico.inserir(codigo)
+            self.pilha_desfazer.empilhar(codigo)
+            self.fila_analise.enfileirar(codigo)
+            self.deque_prioridade.inserir_fim(codigo)
+
 
         self.area_conteudo = ctk.CTkFrame(self)
         self.area_conteudo.pack(
@@ -803,47 +811,30 @@ class Envenamento(ctk.CTk):
             pady=5
         )
 
-    
-    
     def mostrar_estruturas(self):
         self.limpar_tela()
 
         self.criar_titulo(
-            "Estruturas de Dados",
-            "Escolha uma estrutura para realizar operações."
+            "Central de Evidências",
+            "Consulte registros, acompanhe análises e gerencie prioridades."
         )
-
-        codigos = [e["codigo"] for e in evidencias]
-
-        lista = ListaSequencial()
-        encadeada = ListaEncadeada()
-        pilha = Pilha()
-        fila = Fila()
-        deque = Deque()
-
-        for codigo in codigos:
-            lista.inserir(codigo)
-            encadeada.inserir(codigo)
-            pilha.empilhar(codigo)
-            fila.enfileirar(codigo)
-            deque.inserir_fim(codigo)
-
-        estruturas = {
-            "Lista sequencial": lista,
-            "Lista encadeada": encadeada,
-            "Pilha": pilha,
-            "Fila": fila,
-            "Deque": deque
-        }
 
         area_opcoes = ctk.CTkFrame(
             self.area_conteudo,
             fg_color="transparent"
         )
-        area_opcoes.pack(fill="x", padx=20, pady=20)
+        area_opcoes.pack(fill="x", padx=20, pady=15)
 
         area_opcoes.grid_columnconfigure(0, weight=1)
         area_opcoes.grid_columnconfigure(1, weight=1)
+
+        estruturas = {
+            "Arquivo de evidências": self.lista_evidencias,
+            "Histórico de cadastros": self.historico,
+            "Desfazer último cadastro": self.pilha_desfazer,
+            "Evidências pendentes de análise": self.fila_analise,
+            "Gerenciar prioridades": self.deque_prioridade
+        }
 
         def abrir_estrutura(nome):
             self.limpar_tela()
@@ -852,21 +843,39 @@ class Envenamento(ctk.CTk):
 
             self.criar_titulo(
                 nome,
-                "Escolha uma operação para executar."
+                "Gerencie as informações da investigação."
             )
 
-            visualizacao = ctk.CTkLabel(
+            visualizacao = ctk.CTkScrollableFrame(
                 self.area_conteudo,
-                fg_color="transparent",
+                height=300
             )
-            visualizacao.pack(fill="x", padx=20, pady=20)
+            visualizacao.pack(
+                fill="both",
+                expand=True,
+                padx=20,
+                pady=10
+            )
 
             entrada = ctk.CTkEntry(
                 self.area_conteudo,
-                placeholder_text="Digite o código da evidência (ex.: E8)",
-                width=280
+                placeholder_text="Digite o código ou índice da evidência",
+                width=300
             )
-            entrada.pack(pady=10)
+            entrada.pack(pady=8)
+
+            def obter_texto(codigo):
+                evidencia = self.tabela_hash.buscar(codigo)
+
+                if evidencia is None:
+                    return f"{codigo} - Cadastro desfeito ou evidência removida."
+
+                return (
+                    f"{evidencia['codigo']} - {evidencia['nome']}\n"
+                    f"Tipo: {evidencia['tipo']} | "
+                    f"Importância: {evidencia['importancia']}\n"
+                    f"Local: {evidencia['local']}"
+                )
 
             def atualizar():
                 for widget in visualizacao.winfo_children():
@@ -877,389 +886,230 @@ class Envenamento(ctk.CTk):
                 if not elementos:
                     ctk.CTkLabel(
                         visualizacao,
-                        text="A lista está vazia.",
-                        font=("Arial", 14)
+                        text="Nenhum registro encontrado.",
+                        font=("Arial", 15)
                     ).pack(pady=20)
+                    return
 
-                
-                elif nome == "Lista sequencial":
-                    for i, elemento in enumerate(elementos):
-                        if i % 4 == 0:
-                            linha = ctk.CTkFrame(
-                                visualizacao,
-                                fg_color="transparent"
-                            )
-                            linha.pack(anchor="center", pady=8)
-
-                        caixa = ctk.CTkFrame(
-                            linha,
-                            width=130,
-                            height=85,
-                            corner_radius=10,
-                            fg_color="#21618C"
-                        )
-                        caixa.pack(side="left", padx=8)
-                        caixa.pack_propagate(False)
-
+                if nome == "Arquivo de evidências":
+                    for i, codigo in enumerate(elementos):
                         ctk.CTkLabel(
-                            caixa,
-                            text=elemento,
-                            font=("Arial", 18, "bold"),
-                            text_color="white"
-                        ).pack(pady=(12, 2))
+                            visualizacao,
+                            text=f"Índice {i} | {obter_texto(codigo)}",
+                            font=("Arial", 14),
+                            justify="left",
+                            anchor="w"
+                        ).pack(fill="x", padx=10, pady=8)
 
+                elif nome == "Histórico de cadastros":
+                    for i, codigo in enumerate(elementos):
                         ctk.CTkLabel(
-                            caixa,
-                            text=f"Índice: {i}",
-                            font=("Arial", 12),
-                            text_color="white"
-                        ).pack()
+                            visualizacao,
+                            text=f"Cadastro {i + 1} | {obter_texto(codigo)}",
+                            font=("Arial", 14),
+                            justify="left",
+                            anchor="w"
+                        ).pack(fill="x", padx=10, pady=8)
 
-
-                elif nome == "Lista encadeada":
-                    for i, elemento in enumerate(elementos):
-                        if i % 4 == 0:
-                            linha = ctk.CTkFrame(
-                                visualizacao,
-                                fg_color="transparent"
-                            )
-                            linha.pack(anchor="center", pady=8)
-
-                        no = ctk.CTkFrame(
-                            linha,
-                            width=100,
-                            height=70,
-                            corner_radius=10,
-                            fg_color="#21618C"
-                        )
-                        no.pack(side="left", padx=5)
-                        no.pack_propagate(False)
-
-                        ctk.CTkLabel(
-                            no,
-                            text=elemento,
-                            font=("Arial", 18, "bold"),
-                            text_color="white"
-                        ).pack(pady=(10, 2))
-
-                        ctk.CTkLabel(
-                            no,
-                            text="Nó",
-                            font=("Arial", 12),
-                            text_color="white"
-                        ).pack()
-
-                        if i % 4 != 3 and i != len(elementos) - 1:
-                            ctk.CTkLabel(
-                                linha,
-                                text="→",
-                                font=("Arial", 24, "bold")
-                            ).pack(side="left", padx=2)
-
-                        if i % 4 == 3 and i != len(elementos) - 1:
-                            ctk.CTkLabel(
-                                visualizacao,
-                                text="↓",
-                                font=("Arial", 20, "bold")
-                            ).pack()
-
-                
-                elif nome == "Pilha":
-                    coluna = ctk.CTkFrame(
-                        visualizacao,
-                        fg_color="transparent"
-                    )
-                    coluna.pack(anchor="center", pady=10)
-
+                elif nome == "Desfazer último cadastro":
                     ctk.CTkLabel(
-                        coluna,
-                        text="TOPO ↓",
+                        visualizacao,
+                        text=f"TOPO DA PILHA: {elementos[-1]}",
                         font=("Arial", 16, "bold"),
-                        text_color="#257C0D"
-                    ).pack(pady=2)
+                        text_color="#B8860B"
+                    ).pack(pady=10)
 
-                    for i, elemento in enumerate(reversed(elementos)):
-                        cor = "#B8860B" if i == 0 else "#21618C"
-
-                        caixa = ctk.CTkFrame(
-                            coluna,
-                            width=120,
-                            height=35,
-                            corner_radius=8,
-                            fg_color=cor
-                        )
-                        caixa.pack(pady=2)
-                        caixa.pack_propagate(False)
-
+                    for codigo in reversed(elementos):
                         ctk.CTkLabel(
-                            caixa,
-                            text=elemento,
-                            font=("Arial", 18, "bold"),
-                            text_color="white"
-                        ).pack(expand=True)
+                            visualizacao,
+                            text=obter_texto(codigo),
+                            font=("Arial", 14),
+                            justify="left"
+                        ).pack(fill="x", padx=10, pady=5)
 
-                elif nome == "Fila":
-                    linha = ctk.CTkFrame(
-                        visualizacao,
-                        fg_color="transparent"
-                    )
-                    linha.pack(anchor="center", pady=20)
-
-                    for i, elemento in enumerate(elementos):
-                        if i == 0:
-                            ctk.CTkLabel(
-                                linha,
-                                text="FRENTE",
-                                font=("Arial", 12, "bold"),
-                                text_color="#257C0D"
-                            ).pack(side="left", padx=5)
-
-                        caixa = ctk.CTkFrame(
-                            linha,
-                            width=80,
-                            height=65,
-                            corner_radius=8,
-                            fg_color="#257C0D" if i == 0 else "#21618C"
-                        )
-                        caixa.pack(side="left", padx=3)
-                        caixa.pack_propagate(False)
-
-                        ctk.CTkLabel(
-                            caixa,
-                            text=elemento,
-                            font=("Arial", 17, "bold"),
-                            text_color="white"
-                        ).pack(expand=True)
-
-                        if i < len(elementos) - 1:
-                            ctk.CTkLabel(
-                                linha,
-                                text="→",
-                                font=("Arial", 20, "bold")
-                            ).pack(side="left", padx=2)
-
-                        if i == len(elementos) - 1:
-                            ctk.CTkLabel(
-                                linha,
-                                text="FINAL",
-                                font=("Arial", 12, "bold"),
-                                text_color="#21618C"
-                            ).pack(side="left", padx=5)
-
-
-                elif nome == "Deque":
-                    linha = ctk.CTkFrame(
-                        visualizacao,
-                        fg_color="transparent"
-                    )
-                    linha.pack(anchor="center", pady=20)
-
-                    if elementos:
-                        ctk.CTkLabel(
-                            linha,
-                            text="INÍCIO",
-                            font=("Arial", 12, "bold"),
-                            text_color="#257C0D"
-                        ).pack(side="left", padx=5)
-
-                        for i, elemento in enumerate(elementos):
-                            cor = "#257C0D" if i == 0 else "#B8860B" if i == len(elementos) - 1 else "#21618C"
-
-                            caixa = ctk.CTkFrame(
-                                linha,
-                                width=80,
-                                height=65,
-                                corner_radius=8,
-                                fg_color=cor
-                            )
-                            caixa.pack(side="left", padx=3)
-                            caixa.pack_propagate(False)
-
-                            ctk.CTkLabel(
-                                caixa,
-                                text=elemento,
-                                font=("Arial", 17, "bold"),
-                                text_color="white"
-                            ).pack(expand=True)
-
-                            if i < len(elementos) - 1:
-                                ctk.CTkLabel(
-                                    linha,
-                                    text="↔",
-                                    font=("Arial", 20, "bold")
-                                ).pack(side="left", padx=2)
-
-                        ctk.CTkLabel(
-                            linha,
-                            text="FINAL",
-                            font=("Arial", 12, "bold"),
-                            text_color="#B8860B"
-                        ).pack(side="left", padx=5)
-
-
-                else:
+                elif nome == "Evidências pendentes de análise":
                     ctk.CTkLabel(
                         visualizacao,
-                        text="Elementos: " + str(elementos),
-                        font=("Arial", 14),
-                        wraplength=750
-                    ).pack(pady=20)
+                        text="PRÓXIMA EVIDÊNCIA:",
+                        font=("Arial", 15, "bold"),
+                        text_color="#257C0D"
+                    ).pack(pady=8)
 
-            atualizar()
+                    for i, codigo in enumerate(elementos):
+                        ctk.CTkLabel(
+                            visualizacao,
+                            text=f"Posição {i + 1} | {obter_texto(codigo)}",
+                            font=("Arial", 14),
+                            justify="left",
+                            anchor="w"
+                        ).pack(fill="x", padx=10, pady=8)
 
-            def adicionar_inicio():
-                codigo = entrada.get().strip().upper()
+                elif nome == "Gerenciar prioridades":
+                    for i, codigo in enumerate(elementos):
+                        prioridade = "ALTA" if i == 0 else "NORMAL"
 
-                if not codigo:
+                        ctk.CTkLabel(
+                            visualizacao,
+                            text=f"{prioridade} | {obter_texto(codigo)}",
+                            font=("Arial", 14),
+                            justify="left",
+                            anchor="w"
+                        ).pack(fill="x", padx=10, pady=8)
+
+            def consultar():
+                valor = entrada.get().strip().upper()
+
+                if not valor:
                     messagebox.showwarning(
                         "Atenção",
-                        "Digite um código."
+                        "Digite um código ou índice para consultar."
                     )
                     return
 
-                if nome == "Deque":
-                    estrutura.inserir_inicio(codigo)
-                else:
+                if nome == "Arquivo de evidências":
+                    elementos = estrutura.listar()
+
+                    if valor.isdigit():
+                        indice = int(valor)
+
+                        if 0 <= indice < len(elementos):
+                            codigo = elementos[indice]
+                        else:
+                            codigo = None
+                    else:
+                        codigo = valor if valor in elementos else None
+
+                    if codigo is None:
+                        messagebox.showinfo(
+                            "Consulta",
+                            "Evidência não encontrada."
+                        )
+                        return
+
                     messagebox.showinfo(
-                        "Operação inválida",
-                        "Essa estrutura não permite inserir no início."
+                        "Dados da evidência",
+                        obter_texto(codigo)
                     )
-                    return
 
                 entrada.delete(0, "end")
+
+            def desfazer_cadastro():
+                codigo = estrutura.topo()
+
+                if codigo is None:
+                    messagebox.showinfo(
+                        "Aviso",
+                        "Não há cadastros para desfazer."
+                    )
+                    return
+
+                evidencia = self.tabela_hash.buscar(codigo)
+
+                if evidencia is None:
+                    estrutura.desempilhar()
+                    atualizar()
+                    return
+
+                confirmar = messagebox.askyesno(
+                    "Desfazer cadastro",
+                    f"Deseja remover o último cadastro?\n\n"
+                    f"{codigo} - {evidencia['nome']}"
+                )
+
+                if not confirmar:
+                    return
+
+                estrutura.desempilhar()
+                evidencias.remove(evidencia)
+
+                if salvar_evidencias():
+                    self.tabela_hash.remover(codigo)
+                    self.lista_evidencias.remover(codigo)
+
+                    if codigo in self.fila_analise.elementos:
+                        self.fila_analise.elementos.remove(codigo)
+
+                    if codigo in self.deque_prioridade.elementos:
+                        self.deque_prioridade.elementos.remove(codigo)
+
+                    messagebox.showinfo(
+                        "Sucesso",
+                        "O último cadastro foi desfeito."
+                    )
+                else:
+                    evidencias.append(evidencia)
+                    estrutura.empilhar(codigo)
+
                 atualizar()
 
-            def adicionar_fim():
+            def analisar_proxima():
+                codigo = estrutura.desenfileirar()
+
+                if codigo is None:
+                    messagebox.showinfo(
+                        "Fila de análise",
+                        "Não existem evidências pendentes."
+                    )
+                    return
+
+                messagebox.showinfo(
+                    "Análise iniciada",
+                    "Evidência retirada da fila:\n\n" + obter_texto(codigo)
+                )
+
+                atualizar()
+
+            def adicionar_prioridade(inicio):
                 codigo = entrada.get().strip().upper()
 
                 if not codigo:
                     messagebox.showwarning(
                         "Atenção",
-                        "Digite um código."
+                        "Digite o código da evidência."
                     )
                     return
 
-                if nome in ["Lista sequencial", "Lista encadeada"]:
-                    estrutura.inserir(codigo)
-                elif nome == "Pilha":
-                    estrutura.empilhar(codigo)
-                elif nome == "Fila":
-                    estrutura.enfileirar(codigo)
-                elif nome == "Deque":
+                if self.tabela_hash.buscar(codigo) is None:
+                    messagebox.showwarning(
+                        "Atenção",
+                        "Essa evidência não está cadastrada."
+                    )
+                    return
+
+                if codigo in estrutura.listar():
+                    messagebox.showwarning(
+                        "Atenção",
+                        "Essa evidência já está na lista de prioridades."
+                    )
+                    return
+
+                if inicio:
+                    estrutura.inserir_inicio(codigo)
+                else:
                     estrutura.inserir_fim(codigo)
 
                 entrada.delete(0, "end")
                 atualizar()
 
-            def remover_inicio():
-                if nome == "Lista sequencial":
-                    elementos = estrutura.listar()
-                    if elementos:
-                        estrutura.remover(elementos[0])
-                        atualizar()
-                    else:
-                        messagebox.showinfo("Aviso", "A lista está vazia.")
-
-                elif nome == "Lista encadeada":
-                    elementos = estrutura.listar()
-                    if elementos:
-                        estrutura.remover(elementos[0])
-                        atualizar()
-                    else:
-                        messagebox.showinfo("Aviso", "A lista está vazia.")
-
-                elif nome == "Fila":
-                    removido = estrutura.desenfileirar()
-                    messagebox.showinfo(
-                        "Fila",
-                        f"Elemento retirado: {removido}"
-                    )
-                    atualizar()
-
-                elif nome == "Deque":
-                    removido = estrutura.remover_inicio()
-                    messagebox.showinfo(
-                        "Deque",
-                        f"Elemento retirado: {removido}"
-                    )
-                    atualizar()
-
+            def retirar_prioridade(inicio):
+                if inicio:
+                    codigo = estrutura.remover_inicio()
                 else:
-                    messagebox.showinfo(
-                        "Operação inválida",
-                        "Essa estrutura não permite retirar pelo início."
-                    )
+                    codigo = estrutura.remover_fim()
 
-            def remover_fim():
-                if nome == "Pilha":
-                    removido = estrutura.desempilhar()
-                elif nome == "Deque":
-                    removido = estrutura.remover_fim()
-                else:
+                if codigo is None:
                     messagebox.showinfo(
-                        "Operação inválida",
-                        "Essa operação não está disponível nesta estrutura."
+                        "Prioridades",
+                        "Não há evidências na lista."
                     )
                     return
 
                 messagebox.showinfo(
-                    "Resultado",
-                    f"Elemento retirado: {removido}"
+                    "Prioridade",
+                    f"Evidência retirada da lista: {codigo}"
                 )
+
                 atualizar()
-
-            def remover_elemento():
-                codigo = entrada.get().strip().upper()
-
-                if not codigo:
-                    messagebox.showwarning(
-                        "Atenção",
-                        "Digite o código que deseja remover."
-                    )
-                    return
-
-                if nome in ["Lista sequencial", "Lista encadeada"]:
-                    sucesso = estrutura.remover(codigo)
-
-                    if sucesso:
-                        messagebox.showinfo(
-                            "Resultado",
-                            "Elemento removido."
-                        )
-                    else:
-                        messagebox.showinfo(
-                            "Resultado",
-                            "Elemento não encontrado."
-                        )
-
-                    entrada.delete(0, "end")
-                    atualizar()
-                else:
-                    messagebox.showinfo(
-                        "Operação inválida",
-                        "Use as operações próprias dessa estrutura."
-                    )
-
-            def consultar():
-                if nome == "Pilha":
-                    valor = estrutura.topo()
-                elif nome == "Fila":
-                    valor = estrutura.frente()
-                else:
-                    codigo = entrada.get().strip().upper()
-
-                    if nome == "Lista sequencial":
-                        valor = estrutura.buscar(codigo)
-                    elif nome == "Lista encadeada":
-                        valor = estrutura.buscar(codigo)
-                    else:
-                        elementos = estrutura.listar()
-                        valor = codigo if codigo in elementos else None
-
-                messagebox.showinfo(
-                    "Consulta",
-                    f"Resultado: {valor}"
-                )
 
             botoes = ctk.CTkFrame(
                 self.area_conteudo,
@@ -1270,56 +1120,59 @@ class Envenamento(ctk.CTk):
             botoes.grid_columnconfigure(0, weight=1)
             botoes.grid_columnconfigure(1, weight=1)
 
-            operacoes = []
-
-            if nome in ["Lista sequencial", "Lista encadeada"]:
-                operacoes = [
-                    ("Inserir elemento", adicionar_fim),
-                    ("Remover elemento", remover_elemento),
-                    ("Buscar elemento", consultar)
-                ]
-
-            elif nome == "Pilha":
-                operacoes = [
-                    ("Empilhar", adicionar_fim),
-                    ("Desempilhar", remover_fim),
-                    ("Consultar topo", consultar)
-                ]
-
-            elif nome == "Fila":
-                operacoes = [
-                    ("Enfileirar", adicionar_fim),
-                    ("Desenfileirar", remover_inicio),
-                    ("Consultar frente", consultar)
-                ]
-
-            elif nome == "Deque":
-                operacoes = [
-                    ("Inserir no início", adicionar_inicio),
-                    ("Inserir no fim", adicionar_fim),
-                    ("Retirar do início", remover_inicio),
-                    ("Retirar do fim", remover_fim)
-                ]
-
-            for i, (texto, comando) in enumerate(operacoes):
+            if nome == "Arquivo de evidências":
                 ctk.CTkButton(
                     botoes,
-                    text=texto,
-                    height=40,
-                    command=comando
-                ).grid(
-                    row=i // 2,
-                    column=i % 2,
-                    padx=6,
-                    pady=6,
-                    sticky="ew"
-                )
+                    text="Consultar evidência",
+                    command=consultar
+                ).grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+
+            elif nome == "Desfazer último cadastro":
+                ctk.CTkButton(
+                    botoes,
+                    text="Desfazer último cadastro",
+                    command=desfazer_cadastro
+                ).grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+
+            elif nome == "Evidências pendentes de análise":
+                ctk.CTkButton(
+                    botoes,
+                    text="Analisar próxima evidência",
+                    command=analisar_proxima
+                ).grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+
+            elif nome == "Gerenciar prioridades":
+                ctk.CTkButton(
+                    botoes,
+                    text="Adicionar ao início (alta prioridade)",
+                    command=lambda: adicionar_prioridade(True)
+                ).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+
+                ctk.CTkButton(
+                    botoes,
+                    text="Adicionar ao final",
+                    command=lambda: adicionar_prioridade(False)
+                ).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+                ctk.CTkButton(
+                    botoes,
+                    text="Retirar do início",
+                    command=lambda: retirar_prioridade(True)
+                ).grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+
+                ctk.CTkButton(
+                    botoes,
+                    text="Retirar do final",
+                    command=lambda: retirar_prioridade(False)
+                ).grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+            atualizar()
 
             ctk.CTkButton(
                 self.area_conteudo,
-                text="Voltar às estruturas",
+                text="Voltar às opções",
                 command=self.mostrar_estruturas
-            ).pack(pady=10)
+            ).pack(pady=5)
 
             ctk.CTkButton(
                 self.area_conteudo,
@@ -1327,13 +1180,7 @@ class Envenamento(ctk.CTk):
                 command=self.mostrar_inicio
             ).pack(pady=5)
 
-        opcoes = [
-            "Lista sequencial",
-            "Lista encadeada",
-            "Pilha",
-            "Fila",
-            "Deque"
-        ]
+        opcoes = list(estruturas.keys())
 
         for i, nome in enumerate(opcoes):
             ctk.CTkButton(
@@ -1357,6 +1204,7 @@ class Envenamento(ctk.CTk):
             height=40,
             command=self.mostrar_inicio
         ).pack(pady=10)
+
   
 
     def mostrar_cadastro(self):
@@ -1510,9 +1358,16 @@ class Envenamento(ctk.CTk):
 
         evidencias.append(nova_evidencia)
 
+        
         if salvar_evidencias():
 
             self.tabela_hash.inserir(nova_evidencia)
+
+            self.lista_evidencias.inserir(codigo)
+            self.historico.inserir(codigo)
+            self.pilha_desfazer.empilhar(codigo)
+            self.fila_analise.enfileirar(codigo)
+            self.deque_prioridade.inserir_fim(codigo)
 
             messagebox.showinfo(
                 "Sucesso",
@@ -1525,36 +1380,104 @@ class Envenamento(ctk.CTk):
             evidencias.pop()
 
     
+    
     def mostrar_mapa(self):
-
         self.limpar_tela()
 
         self.criar_titulo(
             "Mapa da Investigação",
-            "Localização das evidências e do crime"
+            "Explore os locais relacionados ao assassinato de Joffrey."
         )
 
-        arquivo = criar_mapa()
+        caminho_imagem = (
+            Path(__file__).parent
+            / "mapas"
+            / "mapa_investigacao.jpeg"
+        )
 
-        ctk.CTkLabel(
+        if not caminho_imagem.exists():
+            messagebox.showerror(
+                "Erro",
+                "A imagem do mapa não foi encontrada."
+            )
+            return
+
+        try:
+            imagem_original = Image.open(caminho_imagem)
+            imagem_original.load()
+        except Exception as erro:
+            messagebox.showerror(
+                "Erro ao carregar imagem",
+                f"Não foi possível abrir o mapa:\n{erro}"
+            )
+            return
+        
+        self.imagem_mapa = ctk.CTkImage(
+            light_image=imagem_original,
+            dark_image=imagem_original,
+            size=(900, 600)
+        )
+
+        area_mapa = ctk.CTkFrame(
             self.area_conteudo,
-            text=(
-                "O mapa interativo foi gerado com sucesso.\n"
-                "Clique abaixo para visualizar os locais e suas evidências."
-            ),
-            font=("Arial", 15),
-            justify="center"
-        ).pack(pady=30)
+            fg_color="transparent",
+            width=920,
+            height=620
+        )
+        area_mapa.pack(pady=10)
+
+        area_mapa.pack_propagate(False)
+
+        imagem = ctk.CTkLabel(
+            area_mapa,
+            text="",
+            image=self.imagem_mapa
+        )
+        imagem.place(x=10, y=10)
+
+        def mostrar_local(local):
+            evidencias_local = [
+                evidencia for evidencia in evidencias
+                if evidencia["local"] == local
+            ]
+
+            mensagem = f"LOCAL: {local}\n\n"
+
+            if local == "Fortaleza Vermelha":
+                mensagem += "Local relacionado ao crime.\n\n"
+
+            if evidencias_local:
+                mensagem += "EVIDÊNCIAS ENCONTRADAS:\n"
+
+                for evidencia in evidencias_local:
+                    mensagem += (
+                        f"\n{evidencia['codigo']} - "
+                        f"{evidencia['nome']}"
+                    )
+            else:
+                mensagem += "Nenhuma evidência cadastrada neste local."
+
+            messagebox.showinfo(local, mensagem)
 
         ctk.CTkButton(
-            self.area_conteudo,
-            text="Abrir mapa interativo",
-            width=250,
-            height=50,
-            command=lambda: webbrowser.open(
-                Path(arquivo).resolve().as_uri()
-            )
-        ).pack(pady=15)
+            area_mapa,
+            text="● Fortaleza Vermelha",
+            width=150,
+            height=30,
+            fg_color="#9B2226",
+            hover_color="#7A171B",
+            command=lambda: mostrar_local("Fortaleza Vermelha")
+        ).place(relx=0.48, rely=0.43)
+
+        ctk.CTkButton(
+            area_mapa,
+            text="● Salão Principal",
+            width=145,
+            height=30,
+            fg_color="#2463A6",
+            hover_color="#174875",
+            command=lambda: mostrar_local("Salão Principal")
+        ).place(relx=0.35, rely=0.57)
 
         ctk.CTkButton(
             self.area_conteudo,
@@ -1562,7 +1485,7 @@ class Envenamento(ctk.CTk):
             width=220,
             height=40,
             command=self.mostrar_inicio
-        ).pack(pady=15)
+        ).pack(pady=5)
 
 
 
