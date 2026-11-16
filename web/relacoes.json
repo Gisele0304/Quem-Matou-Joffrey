@@ -1,0 +1,58 @@
+[
+    {
+        "origem": "Sansa Stark",
+        "destino": "E2"
+    },
+    {
+        "origem": "Sansa Stark",
+        "destino": "E6"
+    },
+    {
+        "origem": "Petyr Baelish (Mindinho)",
+        "destino": "E2"
+    },
+    {
+        "origem": "Petyr Baelish (Mindinho)",
+        "destino": "E6"
+    },
+    {
+        "origem": "Olenna Tyrell",
+        "destino": "E1"
+    },
+    {
+        "origem": "Olenna Tyrell",
+        "destino": "E2"
+    },
+    {
+        "origem": "Dontos Hollard",
+        "destino": "E2"
+    },
+    {
+        "origem": "Dontos Hollard",
+        "destino": "E6"
+    },
+    {
+        "origem": "Margaery Tyrell",
+        "destino": "E1"
+    },
+    {
+        "origem": "Margaery Tyrell",
+        "destino": "E5"
+    },
+    {
+        "origem": "Tyrion Lannister",
+        "destino": "E1"
+    },
+    {
+        "origem": "Tyrion Lannister",
+        "destino": "E5"
+    },
+    {
+        "origem": "Sansa Stark",
+        "destino": "E8"
+    },
+    {
+        "origem": "Dontos Hollard",
+        "destino": "E8"
+    }
+]

@@ -1,0 +1,72 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section class="hero">
+
+    <div class="eyebrow">O CASAMENTO PÚRPURA · 298 d.C.</div>
+
+    <h1>
+        Quem matou<br>
+        <em>Joffrey Baratheon?</em>
+    </h1>
+
+    <p>
+        Um rei morto. Seis suspeitos. Evidências espalhadas pela
+        Fortaleza Vermelha. Sua investigação começa agora.
+    </p>
+
+    <a class="btn" href="{{ url_for('pagina_evidencias') }}">
+        Acessar arquivo de evidências
+    </a>
+
+</section>
+
+<section class="stats">
+
+    <article>
+        <b>{{ suspeitos|length }}</b>
+        <span>Suspeitos</span>
+    </article>
+
+    <article>
+        <b>{{ evidencias|length }}</b>
+        <span>Evidências registradas</span>
+    </article>
+
+    <article>
+        <b>{{ vitima.causa_morte }}</b>
+        <span>Causa da morte</span>
+    </article>
+
+</section>
+
+<h2>O caso</h2>
+
+<p class="lead">
+    {{ vitima.nome }}, {{ vitima.cargo }}, morreu durante o
+    {{ vitima.evento }}. A investigação reúne personagens,
+    objetos e relatos para reconstruir os acontecimentos daquela noite.
+</p>
+
+<div class="cards">
+
+    <a href="{{ url_for('pagina_suspeitos') }}">
+        <strong>♟ Suspeitos</strong>
+        <span>Conheça os envolvidos e seus possíveis motivos.</span>
+    </a>
+
+    <a href="{{ url_for('pagina_mapa') }}">
+        <strong>⌖ Mapa da investigação</strong>
+        <span>Explore os locais relacionados ao crime.</span>
+    </a>
+
+    <a href="{{ url_for('pagina_grafo') }}">
+        <strong>⌘ Relações</strong>
+        <span>Visualize as conexões entre suspeitos e evidências.</span>
+    </a>
+
+</div>
+
+{% endblock %}

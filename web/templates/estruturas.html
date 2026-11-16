@@ -1,0 +1,124 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="pagehead">
+    <div class="eyebrow">ORGANIZAÇÃO DOS DADOS</div>
+    <h1>Estruturas de dados</h1>
+    <p>
+        Diferentes estruturas foram utilizadas para organizar,
+        armazenar e manipular as informações da investigação.
+    </p>
+</div>
+
+<div class="structuregrid">
+
+    <article class="panel">
+        <h2>Lista sequencial</h2>
+        <p>Armazena elementos em sequência, permitindo inserção, busca e remoção.</p>
+    </article>
+
+    <article class="panel">
+        <h2>Lista encadeada</h2>
+        <p>Organiza elementos por meio de nós conectados.</p>
+    </article>
+
+    <article class="panel">
+        <h2>Pilha</h2>
+        <p>Utiliza a lógica LIFO: o último elemento inserido é o primeiro a sair.</p>
+    </article>
+
+    <article class="panel">
+        <h2>Fila</h2>
+        <p>Utiliza a lógica FIFO: o primeiro elemento inserido é o primeiro a sair.</p>
+    </article>
+
+    <article class="panel">
+        <h2>Deque</h2>
+        <p>Permite inserir e remover elementos no início e no final.</p>
+    </article>
+
+    <article class="panel">
+        <h2>Tabela Hash</h2>
+        <p>Utiliza uma função de dispersão para localizar elementos por suas chaves.</p>
+    </article>
+
+</div>
+
+<section class="panel">
+    <h2>Aplicação na investigação</h2>
+    <p>
+        As estruturas de dados permitem organizar os registros,
+        controlar o histórico de acontecimentos e facilitar a
+        localização das evidências relacionadas ao caso.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>Testar estruturas de dados</h2>
+
+    <p>Selecione uma estrutura e execute operações para visualizar seu funcionamento.</p>
+
+    <form method="POST" action="{{ url_for('pagina_estruturas') }}">
+
+        <label for="estrutura">Estrutura:</label>
+
+        <select name="estrutura" id="estrutura" required>
+            <option value="lista_sequencial" {% if estrutura_selecionada == 'lista_sequencial' %}selected{% endif %}>Lista sequencial</option>
+            <option value="lista_encadeada" {% if estrutura_selecionada == 'lista_encadeada' %}selected{% endif %}>Lista encadeada</option>
+            <option value="pilha" {% if estrutura_selecionada == 'pilha' %}selected{% endif %}>Pilha</option>
+            <option value="fila" {% if estrutura_selecionada == 'fila' %}selected{% endif %}>Fila</option>
+            <option value="deque" {% if estrutura_selecionada == 'deque' %}selected{% endif %}>Deque</option>
+        </select>
+
+        <br><br>
+
+        <label for="elemento">Elemento:</label>
+        <input type="text" name="elemento" id="elemento" placeholder="Digite um elemento">
+
+        <br><br>
+
+        <label for="operacao">Operação:</label>
+
+        <select name="operacao" id="operacao" required>
+            <option value="inserir">Inserir</option>
+            <option value="remover">Remover</option>
+            <option value="buscar">Buscar</option>
+            <option value="empilhar">Empilhar</option>
+            <option value="desempilhar">Desempilhar</option>
+            <option value="topo">Consultar topo</option>
+            <option value="enfileirar">Enfileirar</option>
+            <option value="desenfileirar">Desenfileirar</option>
+            <option value="frente">Consultar frente</option>
+            <option value="inserir_inicio">Inserir no início</option>
+            <option value="inserir_fim">Inserir no fim</option>
+            <option value="remover_inicio">Remover do início</option>
+            <option value="remover_fim">Remover do fim</option>
+        </select>
+
+        <br><br>
+
+        <button type="submit">Executar operação</button>
+
+    </form>
+
+    {% if mensagem %}
+        <p><strong>{{ mensagem }}</strong></p>
+    {% endif %}
+
+    <h3>Elementos armazenados</h3>
+
+    {% if elementos %}
+        <ul>
+            {% for elemento in elementos %}
+                <li>{{ elemento }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum elemento armazenado nesta estrutura.</p>
+    {% endif %}
+
+</section>
+
+{% endblock %}

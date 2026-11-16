@@ -1,0 +1,91 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="pagehead">
+
+    <div class="eyebrow">CARTOGRAFIA DOS SETE REINOS</div>
+
+    <h1>Mapa da investigação</h1>
+
+    <p>
+        Selecione um local para consultar as evidências associadas.
+    </p>
+
+</div>
+
+<div class="mapbox">
+
+    <img
+        src="{{ url_for('static', filename='imagens/mapa_investigacao.jpeg') }}"
+        alt="Mapa ilustrado da investigação"
+    >
+
+    <button
+        class="pin red"
+        style="left:46%;top:57%"
+        onclick="localInfo('Fortaleza Vermelha')"
+    >
+        Fortaleza Vermelha
+    </button>
+
+    <button
+        class="pin blue"
+        style="left:34%;top:47%"
+        onclick="localInfo('Salão Principal')"
+    >
+        Salão Principal
+    </button>
+
+</div>
+
+<section class="panel" id="local-info">
+
+    <h2>Locais da investigação</h2>
+
+    <p>
+        Escolha um marcador no mapa para ver as evidências daquele local.
+    </p>
+
+</section>
+
+<script>
+
+const evidencias = {{ evidencias|tojson }};
+
+function localInfo(local) {
+
+    const achadas = evidencias.filter(
+        e => e.local.toLowerCase() === local.toLowerCase()
+    );
+
+    let html = '<h2>' + local + '</h2>';
+
+    if (achadas.length > 0) {
+
+        html += '<ul>';
+
+        achadas.forEach(e => {
+
+            html += '<li><b>' +
+                e.codigo + ' — ' + e.nome +
+                '</b><br>' + e.descricao + '</li>';
+
+        });
+
+        html += '</ul>';
+
+    } else {
+
+        html += '<p>Nenhuma evidência cadastrada neste local.</p>';
+
+    }
+
+    document.getElementById('local-info').innerHTML = html;
+
+}
+
+</script>
+
+{% endblock %}

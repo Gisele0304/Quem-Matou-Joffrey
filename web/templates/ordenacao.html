@@ -1,0 +1,88 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="pagehead">
+
+    <div class="eyebrow">ANÁLISE COMPUTACIONAL</div>
+
+    <h1>Algoritmos de ordenação</h1>
+
+    <p>
+        Ordene as evidências por importância e compare o tempo
+        de execução dos algoritmos.
+    </p>
+
+</div>
+
+<section class="panel">
+
+    <form method="POST" class="actions">
+
+        <select name="algoritmo">
+
+            {% for a in ['Bubble Sort', 'Insertion Sort', 'Selection Sort', 'QuickSort'] %}
+
+            <option value="{{ a }}" {% if selecionado == a %}selected{% endif %}>
+                {{ a }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+        <button type="submit" class="btn">
+            Executar algoritmo
+        </button>
+
+    </form>
+
+    <h2>Resultado: {{ selecionado }}</h2>
+
+    <ol>
+
+        {% for e in ordenadas %}
+
+        <li>
+            {{ e.codigo }} — {{ e.nome }}
+            <span class="tag">{{ e.importancia }}</span>
+        </li>
+
+        {% else %}
+
+        <li>Nenhuma evidência disponível para ordenação.</li>
+
+        {% endfor %}
+
+    </ol>
+
+</section>
+
+<section class="panel">
+
+    <h2>Comparação de desempenho</h2>
+
+    {% for nome, tempo in tempos.items() %}
+
+    <div class="barrow">
+
+        <span>{{ nome }}</span>
+
+        <div class="bar">
+            <i style="width:{{ [tempo * 100, 100]|min }}%"></i>
+        </div>
+
+        <b>{{ '%.6f'|format(tempo) }} ms</b>
+
+    </div>
+
+    {% endfor %}
+
+    <small class="muted">
+        Os tempos podem variar conforme o computador e a quantidade de dados.
+    </small>
+
+</section>
+
+{% endblock %}

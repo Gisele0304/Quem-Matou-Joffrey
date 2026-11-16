@@ -1,0 +1,45 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="pagehead">
+
+    <div class="eyebrow">ARQUIVO REAL · INVESTIGAÇÃO</div>
+
+    <h1>Os suspeitos</h1>
+
+    <p>
+        Personagens que possuíam proximidade, interesses ou possíveis
+        motivos relacionados à morte do rei.
+    </p>
+
+</div>
+
+<div class="cards">
+
+    {% for suspeito in suspeitos %}
+
+    <article class="person">
+
+        <small>{{ suspeito.codigo }}</small>
+
+        <h2>{{ suspeito.nome }}</h2>
+
+        <p>
+            <strong>Relação com a vítima:</strong><br>
+            {{ suspeito.relacao }}
+        </p>
+
+        <p>
+            <strong>Possível motivo:</strong><br>
+            {{ suspeito.motivo }}
+        </p>
+
+    </article>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

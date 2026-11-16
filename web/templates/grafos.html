@@ -1,0 +1,303 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="pagehead">
+    <div class="eyebrow">RELAÇÕES DA INVESTIGAÇÃO</div>
+    <h1>Grafo de conexões</h1>
+    <p>
+        Explore as relações entre suspeitos e evidências.
+        Arraste os vértices para organizar a visualização.
+    </p>
+</div>
+
+<section class="panel">
+
+    <h2>Adicionar ligação</h2>
+
+    <div class="actions">
+
+        <select id="origem">
+            <option value="">Selecione um suspeito</option>
+        </select>
+
+        <select id="destino">
+            <option value="">Selecione uma evidência</option>
+        </select>
+
+        <button class="btn" onclick="adicionarAresta()">
+            Adicionar ligação
+        </button>
+
+    </div>
+
+    <h2>Remover ligação</h2>
+
+    <div class="actions">
+
+        <select id="arestaRemover">
+            <option value="">Selecione uma ligação</option>
+        </select>
+
+        <button class="btn" onclick="removerAresta()">
+            Remover ligação
+        </button>
+
+    </div>
+
+    <p id="mensagem"></p>
+
+</section>
+
+<section class="panel">
+
+    <h2>Visualização do grafo</h2>
+
+    <p>
+        Arraste os personagens e as evidências para mudar suas posições.
+        As posições serão salvas neste navegador.
+    </p>
+
+    <div id="grafo"
+         style="height: 650px; width: 100%; border-radius: 10px;">
+    </div>
+
+    <p>
+        <strong style="color: #922B21;">●</strong> Suspeitos
+        &nbsp;&nbsp;
+        <strong style="color: #21618C;">■</strong> Evidências
+    </p>
+
+</section>
+
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<script>
+
+let nodes;
+let edges;
+let network;
+
+async function carregarGrafo() {
+
+    const resposta = await fetch("/api/grafo");
+    const dados = await resposta.json();
+
+    const posicoesSalvas = JSON.parse(
+        localStorage.getItem("posicoesGrafo") || "{}"
+    );
+
+    dados.nodes.forEach(no => {
+        if (posicoesSalvas[no.id]) {
+            no.x = posicoesSalvas[no.id].x;
+            no.y = posicoesSalvas[no.id].y;
+        }
+    });
+
+    nodes = new vis.DataSet(dados.nodes);
+    edges = new vis.DataSet(dados.edges);
+
+    const container = document.getElementById("grafo");
+
+    const opcoes = {
+        nodes: {
+            shape: "dot",
+            font: {
+                color: "#ffffff",
+                size: 15,
+                face: "Arial"
+            },
+            borderWidth: 2,
+            margin: 12
+        },
+
+        groups: {
+            suspeito: {
+                color: {
+                    background: "#922B21",
+                    border: "#641E16"
+                },
+                shape: "dot",
+                size: 30
+            },
+
+            evidencia: {
+                color: {
+                    background: "#21618C",
+                    border: "#154360"
+                },
+                shape: "box"
+            }
+        },
+
+        edges: {
+            color: "#89949E",
+            width: 3,
+            smooth: {
+                type: "continuous"
+            }
+        },
+
+        physics: {
+            enabled: true,
+            stabilization: {
+                iterations: 200
+            }
+        },
+
+        interaction: {
+            dragNodes: true,
+            dragView: true,
+            zoomView: true
+        }
+    };
+
+    network = new vis.Network(
+        container,
+        {
+            nodes: nodes,
+            edges: edges
+        },
+        opcoes
+    );
+
+    network.on("stabilizationIterationsDone", function() {
+        network.setOptions({
+            physics: false
+        });
+        salvarPosicoes();
+    });
+
+    network.on("dragEnd", function() {
+        salvarPosicoes();
+    });
+
+    preencherSeletores(dados);
+}
+
+
+function salvarPosicoes() {
+
+    const posicoes = network.getPositions();
+
+    localStorage.setItem(
+        "posicoesGrafo",
+        JSON.stringify(posicoes)
+    );
+}
+
+
+function preencherSeletores(dados) {
+
+    const origem = document.getElementById("origem");
+    const destino = document.getElementById("destino");
+    const remover = document.getElementById("arestaRemover");
+
+    origem.innerHTML = '<option value="">Selecione um suspeito</option>';
+    destino.innerHTML = '<option value="">Selecione uma evidência</option>';
+    remover.innerHTML = '<option value="">Selecione uma ligação</option>';
+
+    dados.nodes
+        .filter(no => no.group === "suspeito")
+        .forEach(no => {
+            origem.add(new Option(no.label, no.id));
+        });
+
+    dados.nodes
+        .filter(no => no.group === "evidencia")
+        .forEach(no => {
+            destino.add(new Option(no.label, no.id));
+        });
+
+    dados.edges.forEach(aresta => {
+
+        const texto =
+            aresta.from + " — " + aresta.to;
+
+        const valor =
+            aresta.from + "|||" + aresta.to;
+
+        remover.add(new Option(texto, valor));
+    });
+}
+
+
+async function atualizarGrafo() {
+
+    await carregarGrafo();
+}
+
+
+async function adicionarAresta() {
+
+    const origem = document.getElementById("origem").value;
+    const destino = document.getElementById("destino").value;
+
+    const resposta = await fetch("/api/grafo/arestas", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            origem: origem,
+            destino: destino
+        })
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+        document.getElementById("mensagem").textContent = resultado.erro;
+        return;
+    }
+
+    document.getElementById("mensagem").textContent =
+        "Ligação adicionada com sucesso!";
+
+    await atualizarGrafo();
+}
+
+
+async function removerAresta() {
+
+    const valor = document.getElementById("arestaRemover").value;
+
+    if (!valor) {
+        document.getElementById("mensagem").textContent =
+            "Selecione uma ligação.";
+        return;
+    }
+
+    const partes = valor.split("|||");
+
+    const resposta = await fetch("/api/grafo/arestas", {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            origem: partes[0],
+            destino: partes[1]
+        })
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+        document.getElementById("mensagem").textContent = resultado.erro;
+        return;
+    }
+
+    document.getElementById("mensagem").textContent =
+        "Ligação removida com sucesso!";
+
+    await atualizarGrafo();
+}
+
+
+carregarGrafo();
+
+</script>
+
+{% endblock %}
